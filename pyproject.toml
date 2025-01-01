@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "private-assistant-iot-state-skill"
-version = "0.1.0"
+version = "0.1.1"
 description = "This package allows the querying of iot states via timescaledb."
 authors = [
     { name = "stkr22", email = "stkr22@github.com" }
@@ -40,7 +40,7 @@ dev = [
 ]
 
 [project.scripts]
-private-assistant-switch-skill = "private_assistant_iot_state_skill.main:app"
+private-assistant-iot-state-skill = "private_assistant_iot_state_skill.main:app"
 
 [tool.ruff]
 target-version = "py312"

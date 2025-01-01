@@ -16,4 +16,4 @@ COPY pyproject.toml README.md uv.lock /app/
 COPY src /app/src
 RUN uv sync --frozen --no-cache
 
-CMD ["/app/.venv/bin/private_assistant_iot_state_skill"]
+CMD ["/app/.venv/bin/private-assistant-iot-state-skill"]
