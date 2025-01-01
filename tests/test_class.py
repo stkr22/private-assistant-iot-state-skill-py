@@ -14,10 +14,9 @@ from private_assistant_iot_state_skill.iot_state_skill import Action, DeviceType
 
 @pytest.fixture
 def template_env() -> jinja2.Environment:
-    env = jinja2.Environment(
+    return jinja2.Environment(
         loader=jinja2.DictLoader({"state_query.j2": "Test template for {{ params.device_type.value }}"})
     )
-    return env
 
 
 @pytest.fixture
