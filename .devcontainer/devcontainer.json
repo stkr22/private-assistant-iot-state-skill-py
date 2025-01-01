@@ -1,0 +1,33 @@
+{
+	"name": "private-assistant-iot-state-skill-dev-environment",
+	"build":
+		{
+			"dockerfile": "Containerfile",
+			"context": "."
+		},
+	"runArgs": [
+		"--userns=keep-id"
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"samuelcolvin.jinjahtml",
+				"streetsidesoftware.code-spell-checker",
+				"christian-kohler.path-intellisense",
+				"charliermarsh.ruff",
+				"ms-python.mypy-type-checker",
+				"tamasfe.even-better-toml",
+				"github.vscode-github-actions",
+				"oderwat.indent-rainbow",
+				"mhutchie.git-graph",
+				"vivaxy.vscode-conventional-commits"
+			]
+		}
+	},
+	"containerEnv": {
+		"HOME": "/home/vscode"
+	},
+	"postCreateCommand": "uv sync --group dev"
+
+}

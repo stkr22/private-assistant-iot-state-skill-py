@@ -1,0 +1,7 @@
+{% if params.states -%}
+{% for state in params.states -%}
+The {{ state[0] }} in room {{ state[1] }} is {{ params.state_filter.value }}.
+{% endfor -%}
+{% else -%}
+No database entries were found{% if params.rooms %} for {{ params.rooms | join(", ") }}{% endif %}.
+{% endif -%}
