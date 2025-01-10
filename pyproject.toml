@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "private-assistant-iot-state-skill"
-version = "0.1.1"
+version = "0.1.2"
 description = "This package allows the querying of iot states via timescaledb."
 authors = [
     { name = "stkr22", email = "stkr22@github.com" }
@@ -22,21 +22,21 @@ classifiers = [
 
 requires-python = ">=3.11,<3.13"
 dependencies = [
-    "asyncpg>=0.30.0",
-    "jinja2>=3.1.5",
-    "mqtt-ingest-pipeline>=0.1.1",
-    "private-assistant-commons>=3.0.0",
-    "typer>=0.15.1",
+    "asyncpg~=0.30.0",
+    "jinja2~=3.1.5",
+    "mqtt-ingest-pipeline~=0.1.1",
+    "private-assistant-commons~=3.0.0",
+    "typer~=0.15.1",
 ]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.8.0",
-    "mypy>=1.11.0",
-    "pytest>=8.3.3",
-    "pytest-cov>=6.0.0",
-    "aiosqlite>=0.20.0",
-    "pytest-asyncio>=0.25.0",
+    "ruff~=0.8.0",
+    "mypy~=1.11.0",
+    "pytest~=8.3.3",
+    "pytest-cov~=6.0.0",
+    "aiosqlite~=0.20.0",
+    "pytest-asyncio~=0.25.0",
 ]
 
 [project.scripts]
