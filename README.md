@@ -10,4 +10,6 @@
 
 Owner: stkr22
 
+**READ THE AGENTS.md**
+
 This package allows the querying of iot states via timescaledb.
