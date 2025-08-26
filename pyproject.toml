@@ -1,16 +1,19 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.8.11,<0.9.0"]
+build-backend = "uv_build"
 
 [project]
 name = "private-assistant-iot-state-skill"
-dynamic = ["version"]
+version = "0.1.3"
 description = "This package allows the querying of iot states via timescaledb."
 authors = [
     { name = "stkr22", email = "stkr22@github.com" }
 ]
 readme = "README.md"
-license = { text = "GNU General Public License v3.0" }
+license = "GPL-3.0"
+license-files = [
+    "LICENSE",
+]
 
 keywords = []
 classifiers = [
@@ -31,14 +34,12 @@ dependencies = [
     "typer~=0.15.1",
 ]
 
-
 [project.urls]
 Homepage = "https://github.com/stkr22/private-assistant-iot-state-skill-py"
 Repository = "https://github.com/stkr22/private-assistant-iot-state-skill-py"
 Documentation = "https://github.com/stkr22/private-assistant-iot-state-skill-py/tree/main/docs"
 Issues = "https://github.com/stkr22/private-assistant-iot-state-skill-py/issues"
 Changelog = "https://github.com/stkr22/private-assistant-iot-state-skill-py/blob/main/CHANGELOG.md"
-
 
 [dependency-groups]
 dev = [
@@ -53,17 +54,10 @@ dev = [
     "commitizen~=4.8.3",
 ]
 
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.build.targets.wheel.hooks.vcs]
-version-file = "src/private_assistant_iot_state_skill/_version.py"
-
 [project.scripts]
 private-assistant-iot-state-skill = "private_assistant_iot_state_skill.main:app"
 
 [tool.ruff]
-target-version = "py312"
 line-length = 120
 indent-width = 4
 
@@ -92,7 +86,6 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 
