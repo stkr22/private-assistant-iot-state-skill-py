@@ -20,11 +20,3 @@ Example Usage:
     from private_assistant_iot_state_skill import IoTStateSkill, SkillConfig
     ```
 """
-
-try:
-    from ._version import __version__
-except ImportError:
-    # Fallback for development installs
-    __version__ = "dev"
-
-__all__ = ["__version__"]
