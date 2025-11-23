@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "private-assistant-iot-state-skill"
-version = "0.2.0"
+version = "0.2.1"
 description = "This package allows the querying of iot states via timescaledb."
 authors = [
     { name = "stkr22", email = "stkr22@github.com" }

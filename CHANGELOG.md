@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.2.0...v0.2.1) (2025-11-23)
+
+
+### Miscellaneous Chores
+
+* update Python version to 3.13.9 in Containerfile ([ac9002b](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/ac9002be2a1717b75999ef4eee6ad78409f10b4f))
+
 ## [0.2.0](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.1.3...v0.2.0) (2025-11-23)
 
 
