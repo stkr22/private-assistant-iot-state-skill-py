@@ -10,8 +10,9 @@ from enum import Enum
 
 import jinja2
 import mqtt_ingest_pipeline.iot_data_transformer as models
-from private_assistant_commons import messages, skill_config
+from private_assistant_commons import skill_config
 from private_assistant_commons.base_skill import BaseSkill
+from private_assistant_commons.intent.models import IntentRequest, IntentType
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel import col, func, select
@@ -95,7 +96,8 @@ class IoTStateSkill(BaseSkill):
         self,
         config_obj: skill_config.SkillConfig,
         template_env: jinja2.Environment,
-        db_engine: AsyncEngine,
+        assistant_engine: AsyncEngine,
+        iot_db_engine: AsyncEngine,
         **kwargs,
     ) -> None:
         """Initialize the IoT State Skill.
@@ -103,13 +105,22 @@ class IoTStateSkill(BaseSkill):
         Args:
             config_obj: Skill configuration with database settings
             template_env: Jinja2 environment for template rendering
-            db_engine: Async database engine for IoT data queries
+            assistant_engine: Async database engine for assistant database (device registry)
+            iot_db_engine: Async database engine for IoT data queries (TimescaleDB)
             **kwargs: Additional arguments passed to BaseSkill
         """
-        super().__init__(config_obj=config_obj, **kwargs)
-        self.db_engine = db_engine
+        super().__init__(config_obj=config_obj, engine=assistant_engine, **kwargs)
+        self.iot_db_engine = iot_db_engine
         self.template_env = template_env
         self.action_to_template: dict[Action, jinja2.Template] = {}
+
+        # AIDEV-NOTE: Intent configuration for skill competition
+        self.supported_intents = {
+            IntentType.QUERY_STATUS: 0.8,
+            IntentType.QUERY_LIST: 0.7,
+            IntentType.SYSTEM_HELP: 0.6,
+        }
+        self.supported_device_types = ["window_sensor"]
 
         # AIDEV-NOTE: Keyword mapping for natural language device type detection
         self.device_type_map: dict[str, DeviceType] = {
@@ -138,37 +149,57 @@ class IoTStateSkill(BaseSkill):
     async def skill_preparations(self) -> None:
         """Perform skill initialization tasks.
 
-        Called once during skill startup to load templates and prepare
-        the skill for handling requests. Part of the BaseSkill lifecycle.
+        Called once during skill startup to:
+        1. Call parent class preparations (loads devices from global registry)
+        2. Register window sensor devices for intent engine
+        3. Load Jinja2 templates for response generation
+
+        Part of the BaseSkill lifecycle.
         """
+        await super().skill_preparations()
+
+        # AIDEV-NOTE: Register window sensor as queryable device type
+        # Device type-driven approach: device_type determines capabilities
+        # TODO: Future enhancement - migrate to device capability system (see GitHub issue)
+        await self.register_device(
+            device_type="window_sensor",
+            name="window",
+            pattern=["window", "windows"],  # Keywords for entity detection
+            room=None,  # Available in all rooms
+        )
+
         self._load_templates()
 
-    async def calculate_certainty(self, intent_analysis_result: messages.IntentAnalysisResult) -> float:
-        """Calculate confidence score for handling the given intent.
+    def _extract_state_filter_from_text(self, raw_text: str) -> StateFilter:
+        """Extract state filter from raw text.
 
-        Analyzes the intent's nouns to determine if this skill can handle
-        the request. Returns maximum confidence (1.0) if any supported
-        device type keywords are found, otherwise returns 0.0.
+        AIDEV-TODO: Migrate to entity-based extraction when intent engine supports state entities.
+        This should come from classified_intent.entities["state"] in the future.
+        See GitHub issue for entity-based state extraction enhancement.
 
         Args:
-            intent_analysis_result: Processed natural language intent with extracted entities
+            raw_text: The raw text from the user's request
 
         Returns:
-            float: Confidence score between 0.0 and 1.0
+            StateFilter: The extracted state filter (OPEN, CLOSED, or ALL)
         """
-        # AIDEV-NOTE: Simple keyword-based confidence calculation - could be enhanced with ML
-        return 1.0 if any(noun in self.device_type_map for noun in intent_analysis_result.nouns) else 0.0
+        text_words = set(raw_text.lower().split())
+        if "open" in text_words:
+            return StateFilter.OPEN
+        if "closed" in text_words:
+            return StateFilter.CLOSED
+        return StateFilter.ALL
 
-    def get_parameters(self, intent_analysis_result: messages.IntentAnalysisResult) -> Parameters:
-        """Extract query parameters from natural language intent.
+    def get_parameters(self, intent_request: IntentRequest) -> Parameters:
+        """Extract query parameters from intent request.
 
-        Analyzes the intent to determine:
-        - Which device type is being queried
-        - Which rooms to search (from intent or request origin)
-        - What state filter to apply (open/closed/all)
+        Analyzes the classified intent to determine:
+        - Which device type is being queried (from entities or text fallback)
+        - Which rooms to search (from entities or request origin)
+        - What state filter to apply (from text parsing for now)
 
         Args:
-            intent_analysis_result: Processed natural language intent
+            intent_request: Intent request with classified intent and client request
 
         Returns:
             Parameters: Structured parameters for database query
@@ -176,25 +207,37 @@ class IoTStateSkill(BaseSkill):
         Raises:
             ValueError: If no supported device type is found in the request
         """
-        # AIDEV-NOTE: Device type detection using keyword mapping
-        device_type = next(
-            (self.device_type_map[noun] for noun in intent_analysis_result.nouns if noun in self.device_type_map), None
-        )
+        classified_intent = intent_request.classified_intent
+        client_request = intent_request.client_request
+
+        # AIDEV-NOTE: Try entity-based device detection first, fallback to text-based
+        device_entities = classified_intent.entities.get("device", [])
+        device_type = None
+
+        if device_entities:
+            # Entity-based detection (preferred)
+            for entity in device_entities:
+                if entity.normalized_value in self.device_type_map:
+                    device_type = self.device_type_map[entity.normalized_value]
+                    break
+
+        if not device_type:
+            # AIDEV-NOTE: Fallback to text-based detection during transition period
+            # Extract nouns from raw_text for compatibility
+            text_words = classified_intent.raw_text.lower().split()
+            device_type = next(
+                (self.device_type_map[word] for word in text_words if word in self.device_type_map), None
+            )
+
         if not device_type:
             raise ValueError("No valid device type found in request")
 
-        # AIDEV-NOTE: Room resolution - use specified rooms or fallback to request origin
-        rooms = intent_analysis_result.rooms or [intent_analysis_result.client_request.room]
+        # AIDEV-NOTE: Room resolution from entities or fallback to request origin
+        room_entities = classified_intent.entities.get("room", [])
+        rooms = [entity.normalized_value for entity in room_entities] if room_entities else [client_request.room]
 
-        # AIDEV-NOTE: State filter extraction from natural language text
-        text_words = set(intent_analysis_result.client_request.text.lower().split())
-        state_filter = (
-            StateFilter.OPEN
-            if "open" in text_words
-            else StateFilter.CLOSED
-            if "closed" in text_words
-            else StateFilter.ALL
-        )
+        # AIDEV-NOTE: State filter extraction using text-based helper (temporary)
+        state_filter = self._extract_state_filter_from_text(classified_intent.raw_text)
 
         return Parameters(device_type=device_type, rooms=rooms, state_filter=state_filter)
 
@@ -209,12 +252,13 @@ class IoTStateSkill(BaseSkill):
             params: Query parameters with device type, rooms, and state filter
 
         Returns:
-            list[tuple]: List of (device_name, room) tuples matching the query
+            list[tuple]: List of (device_name, room, state) tuples matching the query.
+                        State is "open" or "closed" based on the payload contact value.
         """
-        # AIDEV-NOTE: Room name normalization - database stores rooms without spaces
-        rooms_wo_whitespace = [room.replace(" ", "") for room in params.rooms]
+        # AIDEV-NOTE: Room name normalization - database stores rooms with underscores instead of spaces
+        rooms_wo_whitespace = [room.replace(" ", "_") for room in params.rooms]
 
-        async with AsyncSession(self.db_engine) as session:
+        async with AsyncSession(self.iot_db_engine) as session:
             # AIDEV-QUESTION: Consider indexing strategy for device_id, time, and room columns
             subquery = (
                 select(
@@ -229,14 +273,22 @@ class IoTStateSkill(BaseSkill):
             ).subquery()
 
             # AIDEV-NOTE: State filtering based on contact sensor payload
+            base_query = select(subquery.c.device_name, subquery.c.room, subquery.c.payload)
             if params.state_filter != StateFilter.ALL:
                 is_closed = params.state_filter != StateFilter.OPEN
-                filter_query = select(subquery.c.device_name, subquery.c.room).where(
-                    subquery.c.payload["contact"].astext == str(is_closed).lower()
-                )
-            query = filter_query.where(subquery.c.row_num == 1)
+                base_query = base_query.where(subquery.c.payload["contact"].astext == str(is_closed).lower())
+            query = base_query.where(subquery.c.row_num == 1)
             result = await session.exec(query)
-            return list(result.all())
+
+            # AIDEV-NOTE: Extract actual state from payload and return (device_name, room, state)
+            # contact=False means open, contact=True means closed
+            states = []
+            for device_name, room, payload in result.all():
+                is_closed = payload.get("contact", False)
+                state = "closed" if is_closed else "open"
+                states.append((device_name, room, state))
+
+            return states
 
     def get_answer(self, params: Parameters) -> str:
         """Generate natural language response using Jinja2 templates.
@@ -258,7 +310,7 @@ class IoTStateSkill(BaseSkill):
         self.logger.error("No template found for action %s", params.action)
         return "Sorry, I couldn't process your request"
 
-    async def process_request(self, intent: messages.IntentAnalysisResult) -> None:
+    async def process_request(self, intent_request: IntentRequest) -> None:
         """Process a user's natural language request about IoT devices.
 
         Main entry point for handling voice queries. Extracts parameters,
@@ -266,13 +318,13 @@ class IoTStateSkill(BaseSkill):
         through the MQTT broker.
 
         Args:
-            intent: Processed natural language intent with extracted entities
+            intent_request: Intent request with classified intent and client request
         """
         # AIDEV-NOTE: Request processing pipeline: params -> query -> response
-        params = self.get_parameters(intent)
+        params = self.get_parameters(intent_request)
         params.states = await self.get_device_states(params)
         response = self.get_answer(params)
-        await self.send_response(response, intent.client_request)
+        await self.send_response(response, intent_request.client_request)
 
     async def cleanup(self) -> None:
         """Clean up resources when skill shuts down.
@@ -280,5 +332,5 @@ class IoTStateSkill(BaseSkill):
         Properly closes database connections and releases resources.
         Called automatically by the BaseSkill lifecycle management.
         """
-        # AIDEV-NOTE: Graceful database connection cleanup
-        await self.db_engine.dispose()
+        # AIDEV-NOTE: Graceful database connection cleanup for IoT data engine
+        await self.iot_db_engine.dispose()

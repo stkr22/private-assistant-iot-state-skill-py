@@ -10,7 +10,7 @@ authors = [
     { name = "stkr22", email = "stkr22@github.com" }
 ]
 readme = "README.md"
-license = "GPL-3.0"
+license = "GPL-3.0-only"
 license-files = [
     "LICENSE",
 ]
@@ -27,11 +27,10 @@ classifiers = [
 
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "asyncpg~=0.30.0",
     "jinja2~=3.1.5",
     "mqtt-ingest-pipeline~=0.1.1",
-    "private-assistant-commons~=3.0.0",
-    "typer~=0.15.1",
+    "private-assistant-commons~=5.2.2",
+    "typer~=0.20.0",
 ]
 
 [project.urls]
@@ -43,15 +42,12 @@ Changelog = "https://github.com/stkr22/private-assistant-iot-state-skill-py/blob
 
 [dependency-groups]
 dev = [
-    "ruff~=0.8.0",
+    "ruff~=0.14.1",
     "mypy~=1.17.0",
     "pytest~=8.4.1",
-    "pytest-cov~=6.0.0",
-    "aiosqlite~=0.21.0",
-    "pytest-asyncio~=0.26.0",
-    "pytest-xdist~=3.6.0",
+    "pytest-cov~=6.2.1",
     "coverage[toml]~=7.6.0",
-    "commitizen~=4.8.3",
+    "pytest-asyncio~=0.25.2",
 ]
 
 [project.scripts]
@@ -92,10 +88,11 @@ warn_unused_configs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-ra -q -n auto"
+addopts = "-ra -q"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
-    "asyncio: mark a test as an async test",
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
 ]
 
 [tool.coverage.run]

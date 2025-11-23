@@ -2,26 +2,40 @@
 
 This module defines the configuration structure required for the IoT State Skill
 to connect to TimescaleDB and integrate with the private assistant ecosystem.
+
+Note: This skill uses the base SkillConfig from private-assistant-commons directly
+without customization. Import it from commons.SkillConfig when needed.
 """
 
-import private_assistant_commons as commons
+from private_assistant_commons.database import PostgresConfig
+from pydantic import AliasChoices, Field
+from pydantic_settings import SettingsConfigDict
 
 
-class SkillConfig(commons.SkillConfig):
-    """Configuration model for IoT State Skill.
+class TimescalePostgresConfig(PostgresConfig):
+    """TimescaleDB connection configuration.
 
-    Extends the base SkillConfig from private-assistant-commons with
-    IoT-specific database connection parameters.
+    Inherits from PostgresConfig but uses IOT_POSTGRES_ environment variable prefix
+    to separate TimescaleDB connection from the Assistant database connection.
 
-    Attributes:
-        iot_postgres_user: PostgreSQL username for IoT database connection
-        iot_postgres_db: Name of the PostgreSQL database containing IoT data
-        iot_postgres_host: Hostname or IP address of the PostgreSQL server
-        iot_postgres_port: Port number for PostgreSQL connection (default: 5432)
+    Environment variables:
+        IOT_POSTGRES_USER: Database user (default: postgres)
+        IOT_POSTGRES_PASSWORD: Database password (default: postgres)
+        IOT_POSTGRES_HOST: Database host (default: localhost)
+        IOT_POSTGRES_PORT: Database port (default: 5432)
+        IOT_POSTGRES_DB: Database name (default: postgres)
+
+    Example:
+        >>> # Automatically loads from IOT_POSTGRES_* environment variables
+        >>> config = TimescalePostgresConfig()
+        >>> engine = create_async_engine(config.connection_string_async)
     """
 
-    # AIDEV-NOTE: Database connection settings for TimescaleDB IoT data storage
-    iot_postgres_user: str = "postgres"
-    iot_postgres_db: str = "postgres"
-    iot_postgres_host: str = "localhost"
-    iot_postgres_port: int = 5432
+    model_config = SettingsConfigDict(env_prefix="IOT_POSTGRES_")
+
+    # AIDEV-NOTE: Override database field to use IOT_POSTGRES_DB env var
+    database: str = Field(
+        default="postgres",
+        description="Database name",
+        validation_alias=AliasChoices("database", "IOT_POSTGRES_DB"),
+    )
