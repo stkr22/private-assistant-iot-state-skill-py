@@ -1,5 +1,5 @@
-# Build stage: Python 3.12.8-bookworm
-FROM docker.io/library/python:3.12.8-bookworm@sha256:68ca65265c466f4b64f8ddab669e13bcba8d4ba77ec4c26658d36f2b9d1b1cad as build-python
+# Build stage: Python 3.13.9-trixie
+FROM docker.io/library/python:3.13.9-trixie@sha256:f2578785b6c139fb4315a4e701a4d2412919ab6301b058eaf49766ce68c97536 AS build-python
 
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
@@ -7,7 +7,7 @@ ENV UV_LINK_MODE=copy \
     PYTHONUNBUFFERED=1
 
 # Install uv.
-COPY --from=ghcr.io/astral-sh/uv:0.5.21@sha256:a8d9b557b6cd6ede1842b0e03cd7ac26870e2c6b4eea4e10dab67cbd3145f8d9 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.9.11@sha256:5aa820129de0a600924f166aec9cb51613b15b68f1dcd2a02f31a500d2ede568 /uv /uvx /bin/
 
 # Set working directory
 WORKDIR /app
@@ -19,8 +19,8 @@ RUN --mount=type=cache,target=/root/.cache \
     uv venv && \
     uv pip install dist/*.whl
 
-# runtime stage: Python 3.12.8-slim-bookworm
-FROM docker.io/library/python:3.12.8-slim-bookworm@sha256:10f3aaab98db50cba827d3b33a91f39dc9ec2d02ca9b85cbc5008220d07b17f3
+# runtime stage: Python 3.13.9-slim-trixie
+FROM docker.io/library/python:3.13.9-slim-trixie@sha256:326df678c20c78d465db501563f3492d17c42a4afe33a1f2bf5406a1d56b0e86
 
 ENV PYTHONUNBUFFERED=1
 
