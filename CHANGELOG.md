@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.1.3...v0.2.0) (2025-11-23)
+
+
+### Features
+
+* :sparkles: migrate to private-assistant-commons 5.2.2 ([5f95db9](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/5f95db93cafa3d47ebdaa3fd557fe6839d1bf7d5)), closes [#28](https://github.com/stkr22/private-assistant-iot-state-skill-py/issues/28)
+
+
+### Documentation
+
+* :memo: update for commons 5.2.2 and test suite ([6080790](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/608079040a3cd61271438277e3eba90d3bd25443)), closes [#28](https://github.com/stkr22/private-assistant-iot-state-skill-py/issues/28)
+
 ## [0.1.3](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.1.2...v0.1.3) (2025-08-10)
 
 
