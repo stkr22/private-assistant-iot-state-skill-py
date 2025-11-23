@@ -11,7 +11,8 @@ from typing import Annotated
 
 import jinja2
 import typer
-from private_assistant_commons import mqtt_connection_handler, skill_config, skill_logger
+from private_assistant_commons import SkillConfig, mqtt_connection_handler, skill_config, skill_logger
+from private_assistant_commons.database import PostgresConfig
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from private_assistant_iot_state_skill import config, iot_state_skill
@@ -22,26 +23,20 @@ app = typer.Typer()
 @app.command()
 def main(
     config_path: Annotated[pathlib.Path, typer.Argument(envvar="PRIVATE_ASSISTANT_CONFIG_PATH")],
-    iot_postgres_password: Annotated[
-        str,
-        typer.Option(
-            envvar="IOT_POSTGRES_PASSWORD",
-            help="IoT PostgreSQL password",
-            prompt=True,
-            hide_input=True,
-        ),
-    ] = "postgres",
 ) -> None:
     """Start the Private Assistant IoT State Skill.
 
+    Database passwords are loaded from environment variables:
+    - POSTGRES_PASSWORD: Assistant database (device registry)
+    - IOT_POSTGRES_PASSWORD: TimescaleDB (IoT data storage)
+
     Args:
         config_path: Path to the skill configuration file (TOML format)
-        iot_postgres_password: Password for PostgreSQL database connection
     """
-    asyncio.run(start_skill(config_path, iot_postgres_password))
+    asyncio.run(start_skill(config_path))
 
 
-async def start_skill(config_path: pathlib.Path, iot_postgres_password: str) -> None:
+async def start_skill(config_path: pathlib.Path) -> None:
     """Initialize and start the IoT State Skill.
 
     Sets up logging, loads configuration, creates database connections,
@@ -50,17 +45,17 @@ async def start_skill(config_path: pathlib.Path, iot_postgres_password: str) -> 
 
     Args:
         config_path: Path to the configuration file
-        iot_postgres_password: Password for database authentication
     """
     logger = skill_logger.SkillLogger.get_logger("Private Assistant IoTStateSkill")
 
     # AIDEV-NOTE: Configuration loading from TOML file with environment variable support
-    config_obj = skill_config.load_config(config_path, config.SkillConfig)
+    config_obj = skill_config.load_config(config_path, SkillConfig)
 
-    # AIDEV-NOTE: AsyncPG connection for high-performance TimescaleDB queries
-    db_engine_async = create_async_engine(
-        url=f"postgresql+asyncpg://{config_obj.iot_postgres_user}:{iot_postgres_password}@{config_obj.iot_postgres_host}:{config_obj.iot_postgres_port}/{config_obj.iot_postgres_db}"
-    )
+    # AIDEV-NOTE: Assistant database for global device registry (POSTGRES_* env vars)
+    assistant_db_engine = create_async_engine(PostgresConfig().connection_string_async)
+
+    # AIDEV-NOTE: TimescaleDB for IoT data storage (IOT_POSTGRES_* env vars)
+    iot_db_engine = create_async_engine(config.TimescalePostgresConfig().connection_string_async)
 
     # AIDEV-NOTE: Jinja2 template environment for response generation
     template_env = jinja2.Environment(
@@ -77,7 +72,8 @@ async def start_skill(config_path: pathlib.Path, iot_postgres_password: str) -> 
         5,
         logger=logger,
         template_env=template_env,
-        db_engine=db_engine_async,
+        assistant_engine=assistant_db_engine,
+        iot_db_engine=iot_db_engine,
     )
 
 

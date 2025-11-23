@@ -1,6 +1,6 @@
 {% if params.states -%}
 {% for state in params.states -%}
-The {{ state[0] }} in room {{ state[1] }} is {{ params.state_filter.value }}.
+The {{ state[0] }} in room {{ state[1].replace("_", " ") }} is {{ state[2] }}.
 {% endfor -%}
 {% else -%}
 No database entries were found{% if params.rooms %} for {{ params.rooms | join(", ") }}{% endif %}.
