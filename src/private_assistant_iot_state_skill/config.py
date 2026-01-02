@@ -27,8 +27,14 @@ class TimescalePostgresConfig(PostgresConfig):
 
     Example:
         >>> # Automatically loads from IOT_POSTGRES_* environment variables
+        >>> from sqlalchemy.ext.asyncio import create_async_engine
         >>> config = TimescalePostgresConfig()
-        >>> engine = create_async_engine(config.connection_string_async)
+        >>> engine = create_async_engine(
+        ...     config.connection_string_async,
+        ...     pool_pre_ping=True,
+        ...     pool_recycle=3600,
+        ...     connect_args={"command_timeout": 60}
+        ... )
     """
 
     model_config = SettingsConfigDict(env_prefix="IOT_POSTGRES_")

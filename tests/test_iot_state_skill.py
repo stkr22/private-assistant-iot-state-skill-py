@@ -92,8 +92,6 @@ def config() -> SkillConfig:
     """Create skill configuration for testing."""
     return SkillConfig(
         client_id="test_skill",
-        mqtt_server_host="localhost",
-        mqtt_server_port=1883,
     )
 
 
