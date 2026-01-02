@@ -21,8 +21,7 @@ import aiomqtt
 import jinja2
 import mqtt_ingest_pipeline.iot_data_transformer as iot_models
 import pytest
-from private_assistant_commons import SkillConfig, messages
-from private_assistant_commons.database import PostgresConfig
+from private_assistant_commons import MqttConfig, SkillConfig, create_skill_engine, messages
 from private_assistant_commons.intent.models import ClassifiedIntent, Entity, EntityType, IntentRequest, IntentType
 from private_assistant_commons.mqtt_connection_handler import mqtt_connection_handler
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -39,7 +38,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(scope="function")
 async def assistant_db_engine() -> AsyncIterator[AsyncEngine]:
     """Create async engine for assistant database with table creation/cleanup."""
-    engine = create_async_engine(PostgresConfig().connection_string_async, echo=False)
+    engine = create_skill_engine(echo=False)
 
     # Create all tables needed by private-assistant-commons
     async with engine.begin() as conn:
@@ -57,7 +56,13 @@ async def assistant_db_engine() -> AsyncIterator[AsyncEngine]:
 @pytest.fixture(scope="function")
 async def iot_db_engine() -> AsyncIterator[AsyncEngine]:
     """Create async engine for IoT TimescaleDB with table creation/cleanup."""
-    engine = create_async_engine(TimescalePostgresConfig().connection_string_async, echo=False)
+    engine = create_async_engine(
+        str(TimescalePostgresConfig().connection_string_async),
+        echo=False,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+        connect_args={"command_timeout": 60},
+    )
 
     # Create IoTData table in TimescaleDB
     async with engine.begin() as conn:
@@ -100,8 +105,6 @@ def skill_config() -> SkillConfig:
     """Create skill configuration for testing."""
     return SkillConfig(
         client_id="test_iot_state_skill",
-        mqtt_server_host=os.environ.get("MQTT_SERVER_HOST", "localhost"),
-        mqtt_server_port=int(os.environ.get("MQTT_SERVER_PORT", "1883")),
     )
 
 
@@ -129,6 +132,7 @@ async def mqtt_client(mqtt_config: tuple[str, int]) -> AsyncIterator[aiomqtt.Cli
 @pytest.fixture
 async def running_skill(
     skill_config: SkillConfig,
+    mqtt_config: tuple[str, int],
     template_env: jinja2.Environment,
     assistant_db_engine: AsyncEngine,
     iot_db_engine: AsyncEngine,
@@ -138,11 +142,13 @@ async def running_skill(
     The skill runs with real MQTT communication and database connections,
     processing IntentRequest messages from MQTT and publishing responses.
     """
+    hostname, port = mqtt_config
     # AIDEV-NOTE: Start skill with mqtt_connection_handler (same as production)
     skill_task = asyncio.create_task(
         mqtt_connection_handler(
             IoTStateSkill,
             skill_config,
+            MqttConfig(host=hostname, port=port),
             5,  # reconnection_interval
             template_env=template_env,
             assistant_engine=assistant_db_engine,

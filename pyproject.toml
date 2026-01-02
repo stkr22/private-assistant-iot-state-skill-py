@@ -28,9 +28,9 @@ classifiers = [
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "jinja2~=3.1.5",
-    "mqtt-ingest-pipeline~=0.1.1",
-    "private-assistant-commons~=5.2.2",
-    "typer~=0.20.0",
+    "mqtt-ingest-pipeline~=0.1.4",
+    "private-assistant-commons~=5.4.0",
+    "typer~=0.21.0",
 ]
 
 [project.urls]
@@ -83,6 +83,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 warn_return_any = true
 warn_unused_configs = true
 

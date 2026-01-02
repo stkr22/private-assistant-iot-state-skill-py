@@ -11,8 +11,14 @@ from typing import Annotated
 
 import jinja2
 import typer
-from private_assistant_commons import SkillConfig, mqtt_connection_handler, skill_config, skill_logger
-from private_assistant_commons.database import PostgresConfig
+from private_assistant_commons import (
+    MqttConfig,
+    SkillConfig,
+    create_skill_engine,
+    mqtt_connection_handler,
+    skill_config,
+    skill_logger,
+)
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from private_assistant_iot_state_skill import config, iot_state_skill
@@ -51,11 +57,16 @@ async def start_skill(config_path: pathlib.Path) -> None:
     # AIDEV-NOTE: Configuration loading from TOML file with environment variable support
     config_obj = skill_config.load_config(config_path, SkillConfig)
 
-    # AIDEV-NOTE: Assistant database for global device registry (POSTGRES_* env vars)
-    assistant_db_engine = create_async_engine(PostgresConfig().connection_string_async)
+    # AIDEV-NOTE: Assistant database with connection pooling (POSTGRES_* env vars)
+    assistant_db_engine = create_skill_engine()
 
-    # AIDEV-NOTE: TimescaleDB for IoT data storage (IOT_POSTGRES_* env vars)
-    iot_db_engine = create_async_engine(config.TimescalePostgresConfig().connection_string_async)
+    # AIDEV-NOTE: TimescaleDB with connection pooling (IOT_POSTGRES_* env vars)
+    iot_db_engine = create_async_engine(
+        str(config.TimescalePostgresConfig().connection_string_async),
+        pool_pre_ping=True,
+        pool_recycle=3600,
+        connect_args={"command_timeout": 60},
+    )
 
     # AIDEV-NOTE: Jinja2 template environment for response generation
     template_env = jinja2.Environment(
@@ -69,6 +80,7 @@ async def start_skill(config_path: pathlib.Path) -> None:
     await mqtt_connection_handler.mqtt_connection_handler(
         iot_state_skill.IoTStateSkill,
         config_obj,
+        MqttConfig(),
         5,
         logger=logger,
         template_env=template_env,
