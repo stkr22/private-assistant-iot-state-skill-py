@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.2.1...v0.3.0) (2026-01-02)
+
+
+### Features
+
+* :zap: modernize skill infrastructure and configuration ([1c45d0a](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/1c45d0ab5e7dede9a3ede4e4c6c1724d32929c31))
+* :zap: modernize skill infrastructure and configuration [AI] ([d2c7451](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/d2c74511a3d8ca5e7e38e75be28d23ccb259e1e4)), closes [#37](https://github.com/stkr22/private-assistant-iot-state-skill-py/issues/37)
+
 ## [0.2.1](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.2.0...v0.2.1) (2025-11-23)
 
 
