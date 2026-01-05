@@ -28,8 +28,8 @@ classifiers = [
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "jinja2~=3.1.5",
-    "mqtt-ingest-pipeline~=0.1.4",
-    "private-assistant-commons~=5.4.0",
+    "mqtt-ingest-pipeline~=0.1.5",
+    "private-assistant-commons~=5.5.0",
     "typer~=0.21.0",
 ]
 
