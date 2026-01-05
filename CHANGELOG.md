@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.3.0...v0.3.1) (2026-01-05)
+
+
+### Bug Fixes
+
+* fixing window device duplication bug ([f70d709](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/f70d7091af144da7be8f1309a94e9aa904094c01))
+
 ## [0.3.0](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.2.1...v0.3.0) (2026-01-02)
 
 
