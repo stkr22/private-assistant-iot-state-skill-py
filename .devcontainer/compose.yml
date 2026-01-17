@@ -40,7 +40,7 @@ services:
 
   # PostgreSQL database for device registry
   postgres:
-    image: docker.io/postgres:18.1-trixie
+    image: docker.io/postgres:18.1-trixie@sha256:5773fe724c49c42a7a9ca70202e11e1dff21fb7235b335a73f39297d200b73a2
     container_name: iot-state-skill-postgres
     environment:
       POSTGRES_USER: assistant
@@ -56,7 +56,7 @@ services:
 
   # TimescaleDB for IoT data storage
   timescaledb:
-    image: docker.io/timescale/timescaledb:2.23.1-pg17
+    image: docker.io/timescale/timescaledb:2.24.0-pg17@sha256:8ab414f7f73fd47dfa643097f1a753e2ac009c70fcb0de5717d0e79d21e7b7d6
     container_name: iot-state-skill-timescaledb
     environment:
       POSTGRES_USER: iot_user
@@ -72,7 +72,7 @@ services:
 
   # Eclipse Mosquitto MQTT broker
   mosquitto:
-    image: docker.io/eclipse-mosquitto:2.0.22
+    image: docker.io/eclipse-mosquitto:2.0.22@sha256:077fe4ff4c49df1e860c98335c77dda08360629e0e2a718147027e4db3eace9d
     container_name: iot-state-skill-mosquitto
     volumes:
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
