@@ -272,6 +272,7 @@ async def publish_intent_request(
     Args:
         mqtt_client: Connected MQTT client
         intent_request: Intent request to publish
+
     """
     # AIDEV-NOTE: Publish to the skill's input topic (assistant/intent_engine/result)
     await mqtt_client.publish(
@@ -283,26 +284,27 @@ async def publish_intent_request(
 async def wait_for_response(
     mqtt_client: aiomqtt.Client,
     output_topic: str,
-    timeout: float = 5.0,
+    timeout_seconds: float = 5.0,
 ) -> str:
     """Subscribe to output topic and wait for skill response.
 
     Args:
         mqtt_client: Connected MQTT client
         output_topic: Topic to subscribe to for responses
-        timeout: Maximum time to wait for response in seconds
+        timeout_seconds: Maximum time to wait for response in seconds
 
     Returns:
         Response text from the skill
 
     Raises:
         asyncio.TimeoutError: If no response received within timeout
+
     """
     # AIDEV-NOTE: Subscribe to the output topic before publishing
     await mqtt_client.subscribe(output_topic)
 
     try:
-        async with asyncio.timeout(timeout):
+        async with asyncio.timeout(timeout_seconds):
             async for message in mqtt_client.messages:
                 if message.topic.matches(output_topic):
                     # Parse the ServerResponse from MQTT message
@@ -315,7 +317,7 @@ async def wait_for_response(
             # This should never be reached as messages is an infinite async iterator
             raise RuntimeError("MQTT message stream ended unexpectedly")
     except TimeoutError as e:
-        msg = f"No response received on topic {output_topic} within {timeout}s"
+        msg = f"No response received on topic {output_topic} within {timeout_seconds}s"
         raise TimeoutError(msg) from e
 
 
@@ -345,7 +347,7 @@ class TestQueryStatusIntent:
         )
         classified_intent = ClassifiedIntent(
             id=uuid.uuid4(),
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             confidence=0.9,
             entities={
                 "device": [
@@ -369,7 +371,7 @@ class TestQueryStatusIntent:
         await publish_intent_request(mqtt_client, intent_request)
 
         # AIDEV-NOTE: Wait for response via MQTT
-        response_text = await wait_for_response(mqtt_client, output_topic, timeout=5.0)
+        response_text = await wait_for_response(mqtt_client, output_topic, timeout_seconds=5.0)
 
         assert response_text.strip() == "The left window in room living room is open."
 
@@ -395,7 +397,7 @@ class TestQueryStatusIntent:
         )
         classified_intent = ClassifiedIntent(
             id=uuid.uuid4(),
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             confidence=0.9,
             entities={
                 "device": [
@@ -417,7 +419,7 @@ class TestQueryStatusIntent:
         )
 
         await publish_intent_request(mqtt_client, intent_request)
-        response_text = await wait_for_response(mqtt_client, output_topic, timeout=5.0)
+        response_text = await wait_for_response(mqtt_client, output_topic, timeout_seconds=5.0)
 
         # AIDEV-NOTE: Verify response contains only open windows
         assert response_text.strip() == "The left window in room living room is open."
@@ -444,7 +446,7 @@ class TestQueryStatusIntent:
         )
         classified_intent = ClassifiedIntent(
             id=uuid.uuid4(),
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             confidence=0.9,
             entities={
                 "device": [
@@ -468,7 +470,7 @@ class TestQueryStatusIntent:
         )
 
         await publish_intent_request(mqtt_client, intent_request)
-        response_text = await wait_for_response(mqtt_client, output_topic, timeout=5.0)
+        response_text = await wait_for_response(mqtt_client, output_topic, timeout_seconds=5.0)
 
         # AIDEV-NOTE: Verify response contains only closed windows
         assert response_text.strip() == "The right window in room bedroom is closed."
@@ -495,7 +497,7 @@ class TestQueryStatusIntent:
         )
         classified_intent = ClassifiedIntent(
             id=uuid.uuid4(),
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             confidence=0.9,
             entities={
                 "device": [
@@ -520,7 +522,7 @@ class TestQueryStatusIntent:
         )
 
         await publish_intent_request(mqtt_client, intent_request)
-        response_text = await wait_for_response(mqtt_client, output_topic, timeout=5.0)
+        response_text = await wait_for_response(mqtt_client, output_topic, timeout_seconds=5.0)
 
         # AIDEV-NOTE: Verify response contains windows from both rooms
         # Template outputs each device on a separate line
@@ -552,7 +554,7 @@ class TestQueryStatusIntent:
         )
         classified_intent = ClassifiedIntent(
             id=uuid.uuid4(),
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             confidence=0.9,
             entities={
                 "device": [
@@ -574,7 +576,7 @@ class TestQueryStatusIntent:
         )
 
         await publish_intent_request(mqtt_client, intent_request)
-        response_text = await wait_for_response(mqtt_client, output_topic, timeout=5.0)
+        response_text = await wait_for_response(mqtt_client, output_topic, timeout_seconds=5.0)
 
         # AIDEV-NOTE: Verify "no entries found" response
         assert response_text.strip() == "No database entries were found for garage."

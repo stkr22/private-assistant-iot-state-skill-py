@@ -38,6 +38,7 @@ def main(
 
     Args:
         config_path: Path to the skill configuration file (TOML format)
+
     """
     asyncio.run(start_skill(config_path))
 
@@ -51,6 +52,7 @@ async def start_skill(config_path: pathlib.Path) -> None:
 
     Args:
         config_path: Path to the configuration file
+
     """
     logger = skill_logger.SkillLogger.get_logger("Private Assistant IoTStateSkill")
 

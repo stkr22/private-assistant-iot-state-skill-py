@@ -1,7 +1,7 @@
 # Private Assistant IoT State Skill
 
 [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
-[![python](https://img.shields.io/badge/Python-3.12-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff)](#)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json)](https://github.com/charliermarsh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -13,7 +13,7 @@ A distributed voice assistant skill for querying IoT device states from Timescal
 ## Features
 
 - 🏠 **Room-based queries**: Query IoT device states by room
-- 🪟 **Window sensor support**: Check if windows are open, closed, or get all states  
+- 🪟 **Window sensor support**: Check if windows are open, closed, or get all states
 - 📊 **TimescaleDB integration**: Efficient time-series data queries
 - 🤖 **Voice assistant integration**: Natural language processing via MQTT
 - 🔄 **Confidence-based skill selection**: Competes with other skills for query handling
@@ -92,9 +92,9 @@ The skill responds to natural language queries about IoT devices:
 ### Query Patterns
 
 - **Room filtering**: Queries specific rooms or defaults to request origin room
-- **State filtering**: 
+- **State filtering**:
   - `open` → shows only open devices
-  - `closed` → shows only closed devices  
+  - `closed` → shows only closed devices
   - Default → shows all device states
 
 ## Architecture

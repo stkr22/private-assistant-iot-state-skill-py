@@ -7,9 +7,10 @@ based on available skill actions.
 Template Naming Convention:
     Templates follow the pattern: {action_name}.j2
 
-    Example:
+Example:
     - state_query.j2 -> handles STATE_QUERY actions
 
 Available Templates:
     - state_query.j2: Formats device state information for user responses
+
 """
