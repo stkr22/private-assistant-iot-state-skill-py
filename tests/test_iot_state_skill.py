@@ -121,6 +121,7 @@ async def skill(
     # Mock BaseSkill methods that interact with database
     skill.ensure_skill_registered = AsyncMock()  # type: ignore[method-assign]
     skill.ensure_device_types_registered = AsyncMock()  # type: ignore[method-assign]
+    skill.ensure_intents_registered = AsyncMock()  # type: ignore[method-assign]
     skill.register_device = AsyncMock()  # type: ignore[method-assign]
     skill.send_response = AsyncMock()  # type: ignore[method-assign]
     skill.global_devices = []  # type: ignore[misc]
@@ -168,7 +169,7 @@ class TestIoTStateSkill:
         )
         states = await skill.get_device_states(params)
 
-        assert len(states) == 2  # noqa: PLR2004
+        assert len(states) == 2
         assert ("window 1", "livingroom", "open") in states
         assert ("window 2", "bedroom", "closed") in states
 
@@ -176,7 +177,7 @@ class TestIoTStateSkill:
     async def test_get_parameters_with_room_entity(self, skill: IoTStateSkill) -> None:
         """Test parameter extraction when room entity is provided."""
         intent_request = create_mock_intent_request(
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             raw_text="Show me windows in the bedroom",
             room="living room",  # Client request room
             device_entity="windows",
@@ -193,7 +194,7 @@ class TestIoTStateSkill:
     async def test_get_parameters_default_room(self, skill: IoTStateSkill) -> None:
         """Test parameter extraction falls back to client request room when no room entity."""
         intent_request = create_mock_intent_request(
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             raw_text="Show me windows",
             room="kitchen",
             device_entity="windows",
@@ -210,7 +211,7 @@ class TestIoTStateSkill:
     async def test_get_parameters_state_filter_open(self, skill: IoTStateSkill) -> None:
         """Test parameter extraction identifies 'open' state filter from text."""
         intent_request = create_mock_intent_request(
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             raw_text="Are there any open windows?",
             device_entity="windows",
         )
@@ -223,7 +224,7 @@ class TestIoTStateSkill:
     async def test_get_parameters_state_filter_closed(self, skill: IoTStateSkill) -> None:
         """Test parameter extraction identifies 'closed' state filter from text."""
         intent_request = create_mock_intent_request(
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             raw_text="Show me closed windows",
             device_entity="windows",
         )
@@ -236,7 +237,7 @@ class TestIoTStateSkill:
     async def test_get_parameters_no_device_entity(self, skill: IoTStateSkill) -> None:
         """Test parameter extraction raises ValueError when no device type found."""
         intent_request = create_mock_intent_request(
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             raw_text="Show me the status",
             device_entity=None,  # No device entity
         )
@@ -288,7 +289,7 @@ class TestIoTStateSkill:
         skill.get_device_states = AsyncMock(return_value=[("window 1", "livingroom", "open")])  # type: ignore[method-assign]
 
         intent_request = create_mock_intent_request(
-            intent_type=IntentType.QUERY_STATUS,
+            intent_type=IntentType.DATA_QUERY,
             raw_text="Show me all windows",
             device_entity="windows",
         )
@@ -298,23 +299,6 @@ class TestIoTStateSkill:
         # AIDEV-NOTE: Verify response was generated and sent
         assert skill.send_response.called  # type: ignore[attr-defined]
         assert skill.get_device_states.called  # type: ignore[attr-defined]
-
-    @pytest.mark.asyncio
-    async def test_process_request_system_help(self, skill: IoTStateSkill) -> None:
-        """Test processing SYSTEM_HELP intent generates help response."""
-        # AIDEV-NOTE: Mock get_device_states to return empty list for help
-        skill.get_device_states = AsyncMock(return_value=[])  # type: ignore[method-assign]
-
-        intent_request = create_mock_intent_request(
-            intent_type=IntentType.SYSTEM_HELP,
-            raw_text="What can you tell me about windows?",
-            device_entity="windows",
-        )
-
-        await skill.process_request(intent_request)
-
-        # AIDEV-NOTE: Verify response was sent even for help intent
-        assert skill.send_response.called  # type: ignore[attr-defined]
 
 
 class TestIntentValidation:
@@ -326,22 +310,10 @@ class TestIntentValidation:
         assert "window_sensor" in skill.supported_device_types
 
     @pytest.mark.asyncio
-    async def test_skill_supports_query_status_intent(self, skill: IoTStateSkill) -> None:
-        """Test skill supports QUERY_STATUS intent with appropriate confidence."""
-        assert IntentType.QUERY_STATUS in skill.supported_intents
-        assert skill.supported_intents[IntentType.QUERY_STATUS] == 0.8  # noqa: PLR2004
-
-    @pytest.mark.asyncio
-    async def test_skill_supports_query_list_intent(self, skill: IoTStateSkill) -> None:
-        """Test skill supports QUERY_LIST intent."""
-        assert IntentType.QUERY_LIST in skill.supported_intents
-        assert skill.supported_intents[IntentType.QUERY_LIST] == 0.7  # noqa: PLR2004
-
-    @pytest.mark.asyncio
-    async def test_skill_supports_system_help_intent(self, skill: IoTStateSkill) -> None:
-        """Test skill supports SYSTEM_HELP intent."""
-        assert IntentType.SYSTEM_HELP in skill.supported_intents
-        assert skill.supported_intents[IntentType.SYSTEM_HELP] == 0.6  # noqa: PLR2004
+    async def test_skill_supports_data_query_intent(self, skill: IoTStateSkill) -> None:
+        """Test skill supports DATA_QUERY intent with appropriate confidence."""
+        assert IntentType.DATA_QUERY in skill.supported_intents
+        assert skill.supported_intents[IntentType.DATA_QUERY] == 0.8
 
     @pytest.mark.asyncio
     async def test_device_type_map_contains_window_keywords(self, skill: IoTStateSkill) -> None:

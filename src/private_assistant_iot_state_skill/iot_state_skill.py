@@ -63,6 +63,7 @@ class Parameters(BaseModel):
         rooms: List of room names to filter the query
         state_filter: Filter for device states (all/open/closed)
         states: Query results as list of (device_name, room) tuples
+
     """
 
     action: Action = Action.STATE_QUERY
@@ -90,7 +91,10 @@ class IoTStateSkill(BaseSkill):
         template_env: Jinja2 environment for response generation
         action_to_template: Mapping of actions to their Jinja2 templates
         device_type_map: Mapping of keywords to supported device types
+
     """
+
+    help_text = "Query IoT device states from your home - check if windows are open or closed in specific rooms"
 
     def __init__(
         self,
@@ -108,6 +112,7 @@ class IoTStateSkill(BaseSkill):
             assistant_engine: Async database engine for assistant database (device registry)
             iot_db_engine: Async database engine for IoT data queries (TimescaleDB)
             **kwargs: Additional arguments passed to BaseSkill
+
         """
         super().__init__(config_obj=config_obj, engine=assistant_engine, **kwargs)
         self.iot_db_engine = iot_db_engine
@@ -116,9 +121,7 @@ class IoTStateSkill(BaseSkill):
 
         # AIDEV-NOTE: Intent configuration for skill competition
         self.supported_intents = {
-            IntentType.QUERY_STATUS: 0.8,
-            IntentType.QUERY_LIST: 0.7,
-            IntentType.SYSTEM_HELP: 0.6,
+            IntentType.DATA_QUERY: 0.8,
         }
         self.supported_device_types = ["window_sensor"]
 
@@ -137,6 +140,7 @@ class IoTStateSkill(BaseSkill):
 
         Raises:
             jinja2.TemplateNotFound: If any required template is missing
+
         """
         try:
             # AIDEV-NOTE: Dynamic template loading based on available actions
@@ -182,6 +186,7 @@ class IoTStateSkill(BaseSkill):
 
         Returns:
             StateFilter: The extracted state filter (OPEN, CLOSED, or ALL)
+
         """
         text_words = set(raw_text.lower().split())
         if "open" in text_words:
@@ -206,6 +211,7 @@ class IoTStateSkill(BaseSkill):
 
         Raises:
             ValueError: If no supported device type is found in the request
+
         """
         classified_intent = intent_request.classified_intent
         client_request = intent_request.client_request
@@ -254,6 +260,7 @@ class IoTStateSkill(BaseSkill):
         Returns:
             list[tuple]: List of (device_name, room, state) tuples matching the query.
                         State is "open" or "closed" based on the payload contact value.
+
         """
         # AIDEV-NOTE: Room name normalization - database stores rooms with underscores instead of spaces
         rooms_wo_whitespace = [room.replace(" ", "_") for room in params.rooms]
@@ -301,6 +308,7 @@ class IoTStateSkill(BaseSkill):
 
         Returns:
             str: Natural language response for the user
+
         """
         template = self.action_to_template.get(params.action)
         if template:
@@ -319,6 +327,7 @@ class IoTStateSkill(BaseSkill):
 
         Args:
             intent_request: Intent request with classified intent and client request
+
         """
         # AIDEV-NOTE: Request processing pipeline: params -> query -> response
         params = self.get_parameters(intent_request)
