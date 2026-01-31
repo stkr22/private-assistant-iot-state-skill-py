@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.3.1...v0.4.0) (2026-01-31)
+
+
+### Features
+
+* restructure help intent ([e16875f](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/e16875f25cb1b97cc2676195328c7b3e99cae16b))
+* restructure help intent ([8c2cbb3](https://github.com/stkr22/private-assistant-iot-state-skill-py/commit/8c2cbb35b127210622052b0ea755841a81f24dfb))
+
 ## [0.3.1](https://github.com/stkr22/private-assistant-iot-state-skill-py/compare/v0.3.0...v0.3.1) (2026-01-05)
 
 
